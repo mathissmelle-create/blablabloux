@@ -1,4 +1,5 @@
 import { PageShell } from "../../../components/layout/page-shell";
+import { CaseOpeningStage } from "../../../components/animations/case-opening-stage";
 import { SectionHeader } from "../../../components/ui/section-header";
 
 export default async function SingleCasePage({ params }: { params: Promise<{ slug: string }> }) {
@@ -23,14 +24,7 @@ export default async function SingleCasePage({ params }: { params: Promise<{ slu
             <span className="chip">$5.20 / open</span>
           </div>
 
-          <div className="rounded-2xl border border-graphite/80 bg-panel2/70 p-4">
-            <div className="mb-3 h-1 w-full rounded-full bg-gradient-to-r from-transparent via-accent/60 to-transparent" />
-            <div className="grid grid-cols-5 gap-2">
-              {Array.from({ length: 10 }).map((_, idx) => (
-                <div key={idx} className="h-24 rounded-xl border border-graphite/70 bg-black/25" />
-              ))}
-            </div>
-          </div>
+          <CaseOpeningStage title={`${slug} opening reel`} casePrice={5.2} />
 
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <div className="rounded-xl border border-graphite/80 bg-panel2/75 p-3">

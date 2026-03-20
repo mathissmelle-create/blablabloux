@@ -64,6 +64,8 @@ export class CasesService {
       itemName: string;
       value: Prisma.Decimal;
       isGoldSpin: boolean;
+      goldSpinResultItemName?: string;
+      goldSpinResultValue?: Prisma.Decimal;
       nonce: number;
       resultHash: string;
     }>;
@@ -138,6 +140,10 @@ export class CasesService {
               caseEntity.price.mul(caseEntity.goldSpinMultiplier),
             )
           : false;
+        const goldEligiblePool = caseVersion.caseItems.filter((item) => {
+          const threshold = caseEntity.price.mul(caseEntity.goldSpinMultiplier);
+          return item.isGoldEligible && item.itemDefinition.value.greaterThanOrEqualTo(threshold);
+        });
 
         const caseOpen = await tx.caseOpen.create({
           data: {
@@ -180,6 +186,67 @@ export class CasesService {
             },
           },
         });
+
+        let goldSpinResultItemName: string | undefined;
+        let goldSpinResultValue: Prisma.Decimal | undefined;
+        if (isGoldSpin && goldEligiblePool.length > 0) {
+          const goldPoolWeight = goldEligiblePool.reduce((acc, item) => acc + item.weight, 0);
+          const goldDerived = this.fairnessService.deriveCaseTicket(
+            {
+              serverSeed: seedPair.currentServerSeedEncrypted,
+              clientSeed: seedPair.clientSeed,
+              nonce: currentNonce,
+              caseVersionId: `${caseVersion.id}:gold`,
+              userId,
+            },
+            goldPoolWeight,
+          );
+
+          let goldCursor = 0;
+          const goldWinningItem = goldEligiblePool.find((item) => {
+            goldCursor += item.weight;
+            return goldDerived.ticket < goldCursor;
+          });
+
+          if (goldWinningItem) {
+            goldSpinResultItemName = goldWinningItem.itemDefinition.itemName;
+            goldSpinResultValue = goldWinningItem.itemDefinition.value;
+
+            await tx.caseOpenResult.create({
+              data: {
+                caseOpenId: caseOpen.id,
+                itemDefinitionId: goldWinningItem.itemDefinitionId,
+                ticket: BigInt(goldDerived.ticket),
+                itemValue: goldWinningItem.itemDefinition.value,
+                isGoldSpin: true,
+                position: 1,
+                metadata: {
+                  fairnessHash: goldDerived.hash,
+                  normalized: goldDerived.normalized,
+                  reason: "gold_spin_respin",
+                },
+              },
+            });
+
+            await tx.inventoryItem.create({
+              data: {
+                userId,
+                itemDefinitionId: goldWinningItem.itemDefinitionId,
+                sourceType: "CASE_OPEN",
+                sourceId: caseOpen.id,
+                value: goldWinningItem.itemDefinition.value,
+                withdrawable: false,
+              },
+            });
+
+            await tx.caseOpen.update({
+              where: { id: caseOpen.id },
+              data: {
+                totalWon: winningCaseItem.itemDefinition.value.add(goldWinningItem.itemDefinition.value),
+              },
+            });
+          }
+        }
 
         await tx.inventoryItem.create({
           data: {
@@ -226,6 +293,8 @@ export class CasesService {
           itemName: winningCaseItem.itemDefinition.itemName,
           value: winningCaseItem.itemDefinition.value,
           isGoldSpin,
+          goldSpinResultItemName,
+          goldSpinResultValue,
           nonce: currentNonce,
           resultHash: derived.hash,
         });

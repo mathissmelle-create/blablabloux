@@ -281,14 +281,378 @@ export class BattlesService {
       });
     });
 
-    const snapshot = await this.getBattleSnapshot(battleId);
+    const snapshot = await this.finalizeBattleIfReady(battleId, eosHash);
+    const roundView = snapshot.rounds.find((entry) => entry.roundNumber === roundNumber);
+    const specialEvent =
+      roundView?.results.some((result) => result.isGoldSpin) === true
+        ? {
+            type: "gold_spin",
+            roundNumber,
+          }
+        : null;
+
     const envelope = this.realtimeService.nextEnvelope(`battle:${battleId}`, "battle.round_resolved", {
       battleId,
       roundNumber,
+      specialEvent,
       snapshot,
     });
     this.realtimeGateway.emitToBattleRoom(battleId, "battle:event", envelope);
     return snapshot;
+  }
+
+  private async finalizeBattleIfReady(battleId: string, eosHash: string) {
+    const snapshot = await this.getBattleSnapshot(battleId);
+    if (snapshot.status === "RESOLVED" || snapshot.status === "CANCELLED") {
+      return snapshot;
+    }
+
+    const allResolved = snapshot.rounds.length > 0 && snapshot.rounds.every((round) => round.status === "RESOLVED");
+    if (!allResolved) {
+      return snapshot;
+    }
+
+    const participantTotals = this.computeParticipantTotals(snapshot);
+    const totalPool = Array.from(participantTotals.values()).reduce((acc, value) => acc + value, 0);
+
+    const winner = this.determineWinner({
+      mode: snapshot.mode,
+      battleId: snapshot.id,
+      battleServerSeed: snapshot.serverSeedEncrypted,
+      eosHash,
+      participantTotals,
+      participants: snapshot.participants.map((participant) => ({
+        id: participant.id,
+        seatIndex: participant.seatIndex,
+        teamIndex: participant.teamIndex,
+      })),
+      rounds: snapshot.rounds.map((round) => ({
+        roundNumber: round.roundNumber,
+        results: round.results.map((result) => ({
+          participantId: result.participantId,
+          value: result.itemValue.toNumber(),
+        })),
+      })),
+    });
+
+    const updated = await this.prisma.battle.update({
+      where: { id: battleId },
+      data: {
+        status: "RESOLVED",
+        winnerParticipantId: winner.winnerParticipantId,
+        winnerTeamIndex: winner.winnerTeamIndex,
+        resolvedAt: new Date(),
+        totalPoolValue: totalPool,
+      },
+      include: {
+        participants: true,
+        rounds: {
+          include: {
+            results: {
+              include: {
+                itemDefinition: true,
+                participant: true,
+              },
+            },
+          },
+          orderBy: { roundNumber: "asc" },
+        },
+      },
+    });
+
+    const envelope = this.realtimeService.nextEnvelope(`battle:${battleId}`, "battle.finalized", {
+      battleId,
+      mode: snapshot.mode,
+      winnerParticipantId: winner.winnerParticipantId,
+      winnerTeamIndex: winner.winnerTeamIndex,
+      totalPoolValue: totalPool,
+    });
+    this.realtimeGateway.emitToBattleRoom(battleId, "battle:event", envelope);
+
+    return updated;
+  }
+
+  private computeParticipantTotals(snapshot: Awaited<ReturnType<BattlesService["getBattleSnapshot"]>>) {
+    const totals = new Map<string, number>();
+    for (const participant of snapshot.participants) {
+      totals.set(participant.id, 0);
+    }
+
+    for (const round of snapshot.rounds) {
+      for (const result of round.results) {
+        totals.set(result.participantId, (totals.get(result.participantId) ?? 0) + result.itemValue.toNumber());
+      }
+    }
+
+    return totals;
+  }
+
+  private determineWinner(input: {
+    mode: BattleMode;
+    battleId: string;
+    battleServerSeed: string;
+    eosHash: string;
+    participantTotals: Map<string, number>;
+    participants: Array<{ id: string; seatIndex: number; teamIndex: number }>;
+    rounds: Array<{ roundNumber: number; results: Array<{ participantId: string; value: number }> }>;
+  }) {
+    const teamMode = new Set(input.participants.map((entry) => entry.teamIndex)).size > 1;
+    if (input.mode === BattleMode.JACKPOT || input.mode === BattleMode.CRAZY_JACKPOT) {
+      const winnerTeamIndex = teamMode
+        ? this.pickJackpotWinnerTeam(input, input.mode === BattleMode.CRAZY_JACKPOT)
+        : null;
+      if (teamMode) {
+        return { winnerParticipantId: this.pickRepresentative(input.participants, winnerTeamIndex), winnerTeamIndex };
+      }
+
+      const winnerParticipantId = this.pickJackpotWinnerParticipant(
+        input,
+        input.mode === BattleMode.CRAZY_JACKPOT,
+      );
+      return { winnerParticipantId, winnerTeamIndex: null };
+    }
+
+    if (input.mode === BattleMode.TERMINAL) {
+      return this.pickTerminalWinner(input, teamMode);
+    }
+
+    return this.pickValueWinner(input, teamMode, input.mode === BattleMode.CRAZY);
+  }
+
+  private pickValueWinner(
+    input: {
+      battleId: string;
+      battleServerSeed: string;
+      eosHash: string;
+      participantTotals: Map<string, number>;
+      participants: Array<{ id: string; seatIndex: number; teamIndex: number }>;
+    },
+    teamMode: boolean,
+    reverse: boolean,
+  ) {
+    if (teamMode) {
+      const teamTotals = new Map<number, number>();
+      for (const participant of input.participants) {
+        teamTotals.set(
+          participant.teamIndex,
+          (teamTotals.get(participant.teamIndex) ?? 0) + (input.participantTotals.get(participant.id) ?? 0),
+        );
+      }
+
+      const selectedTeamIndex = this.pickByComparatorWithTieBreaker(
+        Array.from(teamTotals.entries()).map(([teamIndex, score]) => ({
+          key: teamIndex,
+          score,
+        })),
+        reverse,
+        input.battleId,
+        input.battleServerSeed,
+        input.eosHash,
+        9001,
+      );
+
+      return {
+        winnerParticipantId: this.pickRepresentative(input.participants, selectedTeamIndex),
+        winnerTeamIndex: selectedTeamIndex,
+      };
+    }
+
+    const selectedParticipantId = this.pickByComparatorWithTieBreaker(
+      input.participants.map((participant) => ({
+        key: participant.id,
+        score: input.participantTotals.get(participant.id) ?? 0,
+        seatIndex: participant.seatIndex,
+      })),
+      reverse,
+      input.battleId,
+      input.battleServerSeed,
+      input.eosHash,
+      9002,
+    );
+    return {
+      winnerParticipantId: selectedParticipantId,
+      winnerTeamIndex: null,
+    };
+  }
+
+  private pickTerminalWinner(
+    input: {
+      battleId: string;
+      battleServerSeed: string;
+      eosHash: string;
+      participants: Array<{ id: string; seatIndex: number; teamIndex: number }>;
+      rounds: Array<{ roundNumber: number; results: Array<{ participantId: string; value: number }> }>;
+    },
+    teamMode: boolean,
+  ) {
+    const lastRound = input.rounds.reduce((acc, current) =>
+      current.roundNumber > acc.roundNumber ? current : acc,
+    );
+    if (!lastRound) {
+      throw new Error("Terminal mode requires at least one round");
+    }
+
+    if (teamMode) {
+      const perTeam = new Map<number, number>();
+      for (const result of lastRound.results) {
+        const participant = input.participants.find((entry) => entry.id === result.participantId);
+        if (!participant) {
+          continue;
+        }
+        perTeam.set(participant.teamIndex, (perTeam.get(participant.teamIndex) ?? 0) + result.value);
+      }
+
+      const winnerTeamIndex = this.pickByComparatorWithTieBreaker(
+        Array.from(perTeam.entries()).map(([teamIndex, score]) => ({ key: teamIndex, score })),
+        false,
+        input.battleId,
+        input.battleServerSeed,
+        input.eosHash,
+        9010,
+      );
+      return {
+        winnerParticipantId: this.pickRepresentative(input.participants, winnerTeamIndex),
+        winnerTeamIndex,
+      };
+    }
+
+    const perParticipant = new Map<string, number>();
+    for (const result of lastRound.results) {
+      perParticipant.set(result.participantId, result.value);
+    }
+    const winnerParticipantId = this.pickByComparatorWithTieBreaker(
+      input.participants.map((participant) => ({
+        key: participant.id,
+        score: perParticipant.get(participant.id) ?? 0,
+        seatIndex: participant.seatIndex,
+      })),
+      false,
+      input.battleId,
+      input.battleServerSeed,
+      input.eosHash,
+      9011,
+    );
+
+    return {
+      winnerParticipantId,
+      winnerTeamIndex: null,
+    };
+  }
+
+  private pickJackpotWinnerParticipant(
+    input: {
+      battleId: string;
+      battleServerSeed: string;
+      eosHash: string;
+      participantTotals: Map<string, number>;
+      participants: Array<{ id: string; seatIndex: number }>;
+    },
+    reverseWeight: boolean,
+  ) {
+    const max = Math.max(...Array.from(input.participantTotals.values()), 0);
+    const entries = input.participants.map((participant) => {
+      const value = input.participantTotals.get(participant.id) ?? 0;
+      const weight = reverseWeight ? Math.max(0.0001, max - value + 0.01) : Math.max(0.0001, value);
+      return { key: participant.id, weight, seatIndex: participant.seatIndex };
+    });
+    return this.pickWeighted(entries, input.battleId, input.battleServerSeed, input.eosHash, 9020);
+  }
+
+  private pickJackpotWinnerTeam(
+    input: {
+      battleId: string;
+      battleServerSeed: string;
+      eosHash: string;
+      participantTotals: Map<string, number>;
+      participants: Array<{ id: string; teamIndex: number }>;
+    },
+    reverseWeight: boolean,
+  ) {
+    const teamTotals = new Map<number, number>();
+    for (const participant of input.participants) {
+      teamTotals.set(
+        participant.teamIndex,
+        (teamTotals.get(participant.teamIndex) ?? 0) + (input.participantTotals.get(participant.id) ?? 0),
+      );
+    }
+
+    const max = Math.max(...Array.from(teamTotals.values()), 0);
+    const entries = Array.from(teamTotals.entries()).map(([teamIndex, value]) => ({
+      key: teamIndex,
+      weight: reverseWeight ? Math.max(0.0001, max - value + 0.01) : Math.max(0.0001, value),
+    }));
+    return this.pickWeighted(entries, input.battleId, input.battleServerSeed, input.eosHash, 9021);
+  }
+
+  private pickByComparatorWithTieBreaker<T extends { key: string | number; score: number; seatIndex?: number }>(
+    entries: T[],
+    reverse: boolean,
+    battleId: string,
+    battleServerSeed: string,
+    eosHash: string,
+    nonceSalt: number,
+  ): T["key"] {
+    if (entries.length === 0) {
+      throw new Error("Cannot pick winner from empty entries");
+    }
+
+    const ordered = [...entries].sort((a, b) => (reverse ? a.score - b.score : b.score - a.score));
+    const bestScore = ordered[0]?.score ?? 0;
+    const ties = ordered.filter((entry) => entry.score === bestScore);
+    if (ties.length === 1) {
+      return ties[0]?.key as T["key"];
+    }
+
+    const tieBreak = this.fairnessService.deriveBattleTicket(
+      {
+        battleId,
+        roundNumber: nonceSalt,
+        seatIndex: ties.length,
+        battleServerSeed,
+        eosBlockHash: eosHash,
+      },
+      ties.length,
+    );
+
+    return ties[tieBreak.ticket]?.key as T["key"];
+  }
+
+  private pickWeighted<T extends { key: string | number; weight: number }>(
+    entries: T[],
+    battleId: string,
+    battleServerSeed: string,
+    eosHash: string,
+    nonceSalt: number,
+  ): T["key"] {
+    const normalized = entries.map((entry) => ({ ...entry, integerWeight: Math.max(1, Math.round(entry.weight * 10_000)) }));
+    const total = normalized.reduce((acc, value) => acc + value.integerWeight, 0);
+    const draw = this.fairnessService.deriveBattleTicket(
+      {
+        battleId,
+        roundNumber: nonceSalt,
+        seatIndex: normalized.length,
+        battleServerSeed,
+        eosBlockHash: eosHash,
+      },
+      total,
+    );
+
+    let cursor = 0;
+    for (const entry of normalized) {
+      cursor += entry.integerWeight;
+      if (draw.ticket < cursor) {
+        return entry.key as T["key"];
+      }
+    }
+
+    return normalized[normalized.length - 1]?.key as T["key"];
+  }
+
+  private pickRepresentative(participants: Array<{ id: string; teamIndex: number }>, winnerTeamIndex: number | null) {
+    if (winnerTeamIndex === null) {
+      return null;
+    }
+    return participants.find((participant) => participant.teamIndex === winnerTeamIndex)?.id ?? null;
   }
 
   private nextSeatIndex(usedSeats: number[], maxPlayers: number) {

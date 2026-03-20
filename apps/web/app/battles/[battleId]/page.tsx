@@ -1,4 +1,5 @@
 import { PageShell } from "../../../components/layout/page-shell";
+import { BattleArenaStage } from "../../../components/animations/battle-arena-stage";
 import { SectionHeader } from "../../../components/ui/section-header";
 
 export default async function BattleRoomPage({
@@ -19,30 +20,7 @@ export default async function BattleRoomPage({
 
       <div className="grid gap-5 xl:grid-cols-[1.45fr_1fr]">
         <section className="panel-elevated p-5">
-          <h2 className="text-lg font-semibold text-white">Round Timeline</h2>
-          <div className="mt-4 grid gap-3 sm:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, idx) => (
-              <div key={idx} className="rounded-xl border border-graphite/70 bg-panel2/75 p-3">
-                <p className="text-xs uppercase tracking-[0.14em] text-silver">Round {idx + 1}</p>
-                <p className="mt-1 text-sm text-white">{idx < 2 ? "Resolved" : "Pending"}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-5 rounded-2xl border border-graphite/70 bg-black/25 p-4">
-            <div className="grid gap-3 md:grid-cols-2">
-              {["Team A", "Team B"].map((team) => (
-                <div key={team} className="rounded-xl border border-graphite/70 bg-panel2/70 p-4">
-                  <p className="text-xs uppercase tracking-[0.16em] text-silver">{team}</p>
-                  <div className="mt-3 grid grid-cols-2 gap-2">
-                    {Array.from({ length: 4 }).map((_, idx) => (
-                      <div key={idx} className="h-20 rounded-lg border border-graphite/70 bg-black/30" />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <BattleArenaStage />
         </section>
 
         <aside className="space-y-4">
