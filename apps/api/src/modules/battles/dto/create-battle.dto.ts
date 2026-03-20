@@ -2,35 +2,42 @@ import {
   ArrayMinSize,
   IsArray,
   IsBoolean,
-  IsEnum,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
   Max,
   Min,
 } from "class-validator";
-import { BattleMode } from "@prisma/client";
+import { BATTLE_FORMATS, BATTLE_MODES } from "../battle.types.js";
 
 export class CreateBattleDto {
-  @IsEnum(BattleMode)
-  mode!: BattleMode;
+  @IsIn(BATTLE_MODES)
+  mode!: (typeof BATTLE_MODES)[number];
 
-  @IsInt()
-  @Min(1)
-  @Max(3)
-  teamSize!: number;
-
-  @IsInt()
-  @Min(2)
-  @Max(12)
-  maxPlayers!: number;
+  @IsIn(BATTLE_FORMATS)
+  format!: (typeof BATTLE_FORMATS)[number];
 
   @IsArray()
   @ArrayMinSize(1)
   @IsString({ each: true })
   caseVersionIds!: string[];
 
+  @IsString()
+  @IsIn(["public", "private"])
+  privacy!: "public" | "private";
+
   @IsOptional()
   @IsBoolean()
   enableBots?: boolean = false;
+
+  @IsOptional()
+  @IsString()
+  inviteCode?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(3)
+  @Max(5)
+  countdownSeconds?: number = 4;
 }

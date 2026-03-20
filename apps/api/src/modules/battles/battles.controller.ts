@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, UseGuards } from "@nestjs/common";
 import { CurrentUser } from "../../common/decorators/current-user.decorator.js";
 import { JwtPayload } from "../../common/auth/jwt-payload.type.js";
 import { AccessTokenGuard } from "../auth/guards/access-token.guard.js";
@@ -18,6 +18,12 @@ export class BattlesController {
   @Get(":battleId/snapshot")
   snapshot(@Param("battleId") battleId: string) {
     return this.battlesService.getBattleSnapshot(battleId);
+  }
+
+  @Get(":battleId/events")
+  events(@Param("battleId") battleId: string, @Query("afterSequence") afterSequence?: string) {
+    const parsed = afterSequence ? Number.parseInt(afterSequence, 10) : 0;
+    return this.battlesService.getBattleEvents(battleId, Number.isNaN(parsed) ? 0 : parsed);
   }
 
   @UseGuards(AccessTokenGuard)

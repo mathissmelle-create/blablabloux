@@ -23,10 +23,15 @@ This file defines deterministic backend rules for battle modes. All outcomes are
 
 ## Terminal Mode
 
-- Round eliminations:
-  - after each round, lowest value participant/team may be eliminated if elimination threshold met.
-- Final remaining participant/team wins.
-- If multiple remain after final round, standard tie-breaker applies.
+- Terminal mode is **last-round-decides**:
+  - only the final round's value is used to decide the winner
+  - prior rounds still contribute to timeline and history, but not terminal winner scoring
+- Solo terminal:
+  - participant with highest value in final round wins
+- Team terminal:
+  - team with highest combined final-round value wins
+- If final-round values tie:
+  - deterministic fairness tie-break ticket selects winner
 
 ## Crazy Jackpot
 

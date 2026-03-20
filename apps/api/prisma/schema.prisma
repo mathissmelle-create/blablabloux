@@ -66,10 +66,12 @@ enum CaseOpenStatus {
 
 enum BattleStatus {
   CREATED
-  FILLING
-  COUNTDOWN
-  RUNNING
-  RESOLVED
+  WAITING_FOR_PLAYERS
+  LOCKED
+  START_COUNTDOWN
+  ACTIVE_ROUNDS
+  RESOLVING
+  COMPLETED
   CANCELLED
 }
 
@@ -79,6 +81,19 @@ enum BattleMode {
   JACKPOT
   TERMINAL
   CRAZY_JACKPOT
+}
+
+enum BattlePrivacy {
+  PUBLIC
+  PRIVATE
+}
+
+enum BattlePlayerFormat {
+  ONE_VS_ONE
+  ONE_VS_ONE_VS_ONE
+  ONE_VS_ONE_VS_ONE_VS_ONE
+  TWO_VS_TWO_VS_TWO
+  THREE_VS_THREE
 }
 
 enum BattleRoundStatus {
@@ -316,6 +331,7 @@ model ItemDefinition {
   inventoryItems InventoryItem[]
   caseResults    CaseOpenResult[]
   battleResults  BattleRoundResult[]
+  battleGoldSpinResults BattleGoldSpin[]
 }
 
 model Case {
@@ -424,6 +440,9 @@ model InventoryItem {
 model Battle {
   id                   String       @id @default(cuid())
   mode                 BattleMode
+  format               BattlePlayerFormat
+  privacy              BattlePrivacy @default(PUBLIC)
+  inviteCode           String?      @unique
   teamSize             Int
   maxPlayers           Int
   status               BattleStatus @default(CREATED)
@@ -433,16 +452,23 @@ model Battle {
   hashedServerSeed     String
   targetEosBlockNumber Int
   eosBlockHash         String?
+  lockedAt             DateTime?
+  countdownStartedAt   DateTime?
   startsAt             DateTime?
   resolvedAt           DateTime?
+  completedAt          DateTime?
   winnerParticipantId  String?
   winnerTeamIndex      Int?
   totalPoolValue       Decimal?     @db.Decimal(18, 2)
+  spectatorsCount      Int          @default(0)
+  lastSequence         Int          @default(0)
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
   createdBy            User?        @relation("BattleCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
   participants         BattleParticipant[]
   rounds               BattleRound[]
+  events               BattleEvent[]
+  goldSpins            BattleGoldSpin[]
 
   @@index([status, createdAt])
 }
@@ -459,6 +485,7 @@ model BattleParticipant {
   battle      Battle   @relation(fields: [battleId], references: [id], onDelete: Cascade)
   user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   roundResults BattleRoundResult[]
+  goldSpins   BattleGoldSpin[]
 
   @@unique([battleId, seatIndex])
 }
@@ -470,10 +497,12 @@ model BattleRound {
   caseVersionId String
   status        BattleRoundStatus @default(PENDING)
   startsAt      DateTime?
+  animationStartAt DateTime?
   resolvedAt    DateTime?
   battle        Battle           @relation(fields: [battleId], references: [id], onDelete: Cascade)
   caseVersion   CaseVersion      @relation(fields: [caseVersionId], references: [id], onDelete: Restrict)
   results       BattleRoundResult[]
+  goldSpins     BattleGoldSpin[]
 
   @@unique([battleId, roundNumber])
 }
@@ -484,6 +513,7 @@ model BattleRoundResult {
   participantId        String
   itemDefinitionId     String
   ticket               BigInt
+  baitIndex            Int?
   itemValue            Decimal          @db.Decimal(18, 2)
   isGoldSpin           Boolean          @default(false)
   createdAt            DateTime         @default(now())
@@ -492,6 +522,37 @@ model BattleRoundResult {
   itemDefinition       ItemDefinition   @relation(fields: [itemDefinitionId], references: [id], onDelete: Restrict)
 
   @@index([battleRoundId, participantId])
+}
+
+model BattleGoldSpin {
+  id                     String           @id @default(cuid())
+  battleId               String
+  battleRoundId          String
+  participantId          String
+  triggerItemValue       Decimal          @db.Decimal(18, 2)
+  resultItemDefinitionId String
+  resultItemValue        Decimal          @db.Decimal(18, 2)
+  createdAt              DateTime         @default(now())
+  battle                 Battle           @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  battleRound            BattleRound      @relation(fields: [battleRoundId], references: [id], onDelete: Cascade)
+  participant            BattleParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  resultItemDefinition   ItemDefinition   @relation(fields: [resultItemDefinitionId], references: [id], onDelete: Restrict)
+
+  @@index([battleId, battleRoundId])
+}
+
+model BattleEvent {
+  id              String   @id @default(cuid())
+  battleId         String
+  sequence         Int
+  eventType        String
+  serverTimestampMs BigInt
+  payload          Json
+  createdAt        DateTime @default(now())
+  battle           Battle    @relation(fields: [battleId], references: [id], onDelete: Cascade)
+
+  @@unique([battleId, sequence])
+  @@index([battleId, createdAt])
 }
 
 model RouletteRound {
