@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  @apply bg-background text-white antialiased;
+}
+
+body {
+  min-height: 100vh;
+  background-image:
+    radial-gradient(circle at 15% 10%, rgba(245, 158, 11, 0.1), transparent 35%),
+    radial-gradient(circle at 80% 0%, rgba(148, 163, 184, 0.08), transparent 35%);
+}
+
+.panel {
+  @apply rounded-2xl border border-graphite bg-panel/90 backdrop-blur;
+}
