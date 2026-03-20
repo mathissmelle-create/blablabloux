@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  color-scheme: dark;
+}
+
 html,
 body {
   @apply bg-background text-white antialiased;
@@ -9,11 +13,75 @@ body {
 
 body {
   min-height: 100vh;
-  background-image:
-    radial-gradient(circle at 15% 10%, rgba(245, 158, 11, 0.1), transparent 35%),
-    radial-gradient(circle at 80% 0%, rgba(148, 163, 184, 0.08), transparent 35%);
+  background:
+    radial-gradient(circle at 10% -5%, rgba(245, 158, 11, 0.2), transparent 38%),
+    radial-gradient(circle at 95% -15%, rgba(147, 197, 253, 0.14), transparent 42%),
+    radial-gradient(circle at 70% 130%, rgba(245, 158, 11, 0.08), transparent 35%),
+    linear-gradient(180deg, #06080f 0%, #060913 50%, #070a14 100%);
+  background-attachment: fixed;
 }
 
 .panel {
-  @apply rounded-2xl border border-graphite bg-panel/90 backdrop-blur;
+  @apply rounded-2xl border border-graphite/80 bg-panel/85 shadow-panel backdrop-blur;
+}
+
+.panel-elevated {
+  @apply panel relative overflow-hidden;
+}
+
+.panel-elevated::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  background: linear-gradient(140deg, rgba(245, 158, 11, 0.08), transparent 35%, rgba(148, 163, 184, 0.08));
+  pointer-events: none;
+}
+
+.chip {
+  @apply inline-flex items-center rounded-full border border-graphite/90 bg-panel2/70 px-3 py-1 text-xs font-medium text-silver;
+}
+
+.glass-input {
+  @apply w-full rounded-xl border border-graphite/80 bg-black/25 px-4 py-2.5 text-sm text-white placeholder:text-silver/70 outline-none transition focus:border-accent/70 focus:ring-2 focus:ring-accent/20;
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-black shadow-glow transition hover:brightness-110;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center rounded-xl border border-accent/30 bg-accent/10 px-4 py-2.5 text-sm font-semibold text-accent transition hover:border-accent/60 hover:bg-accent/15;
+}
+
+.btn-ghost {
+  @apply inline-flex items-center justify-center rounded-xl border border-graphite/90 bg-panel2/70 px-4 py-2.5 text-sm font-medium text-silver transition hover:border-silver/40 hover:text-white;
+}
+
+.table-header {
+  @apply text-xs uppercase tracking-[0.18em] text-silver/75;
+}
+
+.text-gradient {
+  background: linear-gradient(95deg, #fbbf24 0%, #f59e0b 35%, #d1d5db 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.fine-grid {
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.hero-glow {
+  background:
+    radial-gradient(circle at 10% 20%, rgba(245, 158, 11, 0.2), transparent 40%),
+    radial-gradient(circle at 80% 0%, rgba(129, 140, 248, 0.16), transparent 35%);
+}
+
+.status-dot {
+  @apply h-2.5 w-2.5 rounded-full;
 }

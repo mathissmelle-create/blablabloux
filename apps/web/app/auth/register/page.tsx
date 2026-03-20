@@ -4,20 +4,22 @@ import { PageShell } from "../../../components/layout/page-shell";
 export default function RegisterPage() {
   return (
     <PageShell>
-      <div className="mx-auto max-w-md panel p-6">
-        <h1 className="text-2xl font-semibold">Register</h1>
-        <form className="mt-4 space-y-3">
-          <input className="w-full rounded-lg border border-graphite bg-black/30 px-3 py-2" placeholder="Email" />
-          <input className="w-full rounded-lg border border-graphite bg-black/30 px-3 py-2" placeholder="Username" />
-          <input
-            className="w-full rounded-lg border border-graphite bg-black/30 px-3 py-2"
-            type="password"
-            placeholder="Password"
-          />
-          <input className="w-full rounded-lg border border-graphite bg-black/30 px-3 py-2" placeholder="Client seed" />
-          <button className="w-full rounded-lg bg-accent py-2 font-semibold text-black">Create account</button>
+      <div className="mx-auto max-w-xl panel-elevated p-8">
+        <p className="chip mb-4">Create account</p>
+        <h1 className="text-3xl font-semibold text-white [font-family:var(--font-orbitron)]">Join CS2 Prime</h1>
+        <p className="mt-2 text-sm text-silver">
+          Start opening cases, joining battles, and verifying each outcome with transparent fairness tools.
+        </p>
+
+        <form className="mt-6 grid gap-3 sm:grid-cols-2">
+          <input className="glass-input sm:col-span-2" placeholder="Email" />
+          <input className="glass-input sm:col-span-2" placeholder="Username" />
+          <input className="glass-input sm:col-span-2" type="password" placeholder="Password" />
+          <input className="glass-input sm:col-span-2" placeholder="Client seed" />
+          <button className="btn-primary sm:col-span-2">Create account</button>
         </form>
-        <p className="mt-3 text-sm text-silver">
+
+        <p className="mt-4 text-sm text-silver">
           Already have an account?{" "}
           <Link href="/auth/login" className="text-accent">
             Login

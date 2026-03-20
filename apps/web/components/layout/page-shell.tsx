@@ -5,7 +5,7 @@ export function PageShell({ children }: PropsWithChildren) {
   return (
     <>
       <TopNav />
-      <main className="mx-auto max-w-7xl px-4 py-8">{children}</main>
+      <main className="mx-auto max-w-[1240px] px-4 pb-16 pt-8 lg:px-6">{children}</main>
     </>
   );
 }
