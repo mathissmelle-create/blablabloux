@@ -9,12 +9,12 @@ export default function AdminDashboardPage() {
       action={<button className="btn-primary">Open Incident Center</button>}
     >
       <section className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-        {[
+        {([
           ["Concurrent Users", "9,284"],
           ["Pending Withdrawals", "17"],
           ["Failed EOS Fetches", "0"],
           ["Suspicious Events", "3"],
-        ].map(([label, value]) => (
+        ] as const).map(([label, value]) => (
           <MetricTile key={label} label={label} value={value} tone={label === "Suspicious Events" ? "danger" : "default"} />
         ))}
       </section>

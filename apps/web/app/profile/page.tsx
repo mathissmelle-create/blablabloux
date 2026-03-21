@@ -22,12 +22,12 @@ export default function ProfilePage() {
           </div>
 
           <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4">
-            {[
+            {([
               ["Wins", "482"],
               ["Cases", "2,814"],
               ["Battles", "719"],
               ["Roulette", "1,092"],
-            ].map(([label, value]) => (
+            ] as const).map(([label, value]) => (
               <MetricTile key={label} label={label} value={value} />
             ))}
           </div>
