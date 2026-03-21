@@ -1,0 +1,24 @@
+{
+  "name": "cs2-platform-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "dev:api": "npm run start:dev -w @cs2/api",
+    "dev:web": "npm run dev -w @cs2/web",
+    "prisma:generate": "npm run prisma:generate -w @cs2/api",
+    "prisma:migrate": "npm run prisma:migrate -w @cs2/api",
+    "prisma:seed": "npm run prisma:seed -w @cs2/api"
+  },
+  "engines": {
+    "node": ">=20.11.0",
+    "npm": ">=10.0.0"
+  }
+}

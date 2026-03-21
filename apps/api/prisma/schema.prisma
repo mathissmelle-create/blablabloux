@@ -1,0 +1,663 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  ACTIVE
+  BANNED
+  MUTED
+  RESTRICTED
+}
+
+enum LedgerDirection {
+  CREDIT
+  DEBIT
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  CASE_OPEN
+  CASE_BATTLE_ENTRY
+  CASE_BATTLE_PAYOUT
+  ROULETTE_BET
+  ROULETTE_PAYOUT
+  MANUAL_ADJUSTMENT
+  ITEM_WITHDRAWAL
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REVERSED
+}
+
+enum GameType {
+  case_open
+  battle
+  roulette
+}
+
+enum InventorySourceType {
+  CASE_OPEN
+  BATTLE
+  ROULETTE
+  MANUAL
+}
+
+enum InventoryItemStatus {
+  OWNED
+  SOLD
+  WITHDRAWN
+  LOCKED
+}
+
+enum CaseOpenStatus {
+  PENDING
+  RESOLVED
+  FAILED
+}
+
+enum BattleStatus {
+  CREATED
+  WAITING_FOR_PLAYERS
+  LOCKED
+  START_COUNTDOWN
+  ACTIVE_ROUNDS
+  RESOLVING
+  COMPLETED
+  CANCELLED
+}
+
+enum BattleMode {
+  STANDARD
+  CRAZY
+  JACKPOT
+  TERMINAL
+  CRAZY_JACKPOT
+}
+
+enum BattlePrivacy {
+  PUBLIC
+  PRIVATE
+}
+
+enum BattlePlayerFormat {
+  ONE_VS_ONE
+  ONE_VS_ONE_VS_ONE
+  ONE_VS_ONE_VS_ONE_VS_ONE
+  TWO_VS_TWO_VS_TWO
+  THREE_VS_THREE
+}
+
+enum BattleRoundStatus {
+  PENDING
+  RUNNING
+  RESOLVED
+}
+
+enum RouletteRoundStatus {
+  OPEN
+  LOCKED
+  SPINNING
+  RESOLVED
+}
+
+enum RouletteColor {
+  RED
+  BLACK
+  GREEN
+  GOLD
+}
+
+enum RouletteBetType {
+  COLOR
+  SEGMENT
+}
+
+enum RouletteBetStatus {
+  PLACED
+  LOST
+  WON
+  REFUNDED
+}
+
+enum RestrictionType {
+  BAN
+  MUTE
+  CHAT_RESTRICTION
+  GAME_RESTRICTION
+  WITHDRAW_RESTRICTION
+}
+
+model User {
+  id                String       @id @default(cuid())
+  email             String       @unique
+  username          String       @unique
+  passwordHash      String?
+  status            UserStatus   @default(ACTIVE)
+  emailVerifiedAt   DateTime?
+  twoFactorEnabled  Boolean      @default(false)
+  twoFactorSecret   String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  wallet            Wallet?
+  sessions          Session[]
+  refreshTokens     RefreshToken[]
+  userRoles         UserRole[]
+  seedPairs         UserSeedPair[]
+  serverSeedHistory ServerSeedRevealHistory[] @relation("SeedOwner")
+  ledgerEntries     BalanceLedger[]
+  transactions      Transaction[]
+  inventoryItems    InventoryItem[]
+  caseOpens         CaseOpen[]
+  battleParticipants BattleParticipant[]
+  rouletteBets      RouletteBet[]
+  notifications     Notification[]
+  restrictions      Restriction[]            @relation("RestrictedUser")
+  createdRestrictions Restriction[]          @relation("RestrictionCreator")
+  auditLogsAuthored AuditLog[]              @relation("AuditActor")
+  auditLogsTargeted AuditLog[]              @relation("AuditTarget")
+  createdCaseVersions CaseVersion[]         @relation("CaseVersionCreator")
+  createdBattles    Battle[]                @relation("BattleCreator")
+}
+
+model Role {
+  id              String           @id @default(cuid())
+  key             String           @unique
+  name            String
+  description     String?
+  userRoles       UserRole[]
+  rolePermissions RolePermission[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model Permission {
+  id              String           @id @default(cuid())
+  key             String           @unique
+  description     String?
+  rolePermissions RolePermission[]
+  createdAt       DateTime         @default(now())
+}
+
+model UserRole {
+  id        String   @id @default(cuid())
+  userId    String
+  roleId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, roleId])
+}
+
+model RolePermission {
+  id           String     @id @default(cuid())
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@unique([roleId, permissionId])
+}
+
+model Session {
+  id         String    @id @default(cuid())
+  userId     String
+  ipAddress  String?
+  userAgent  String?
+  lastSeenAt DateTime  @default(now())
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokens     RefreshToken[]
+
+  @@index([userId, revokedAt])
+}
+
+model RefreshToken {
+  id               String       @id @default(cuid())
+  jti              String       @unique
+  userId           String
+  sessionId        String
+  tokenHash        String       @unique
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  replacedByTokenId String?
+  createdAt        DateTime     @default(now())
+  rotatedAt        DateTime?
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session          Session      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([sessionId, revokedAt])
+}
+
+model UserSeedPair {
+  id                         String   @id @default(cuid())
+  userId                     String
+  gameType                   GameType
+  clientSeed                 String
+  currentServerSeedHash      String
+  currentServerSeedEncrypted String
+  nonce                      Int      @default(0)
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+  user                       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  revealHistory              ServerSeedRevealHistory[]
+
+  @@unique([userId, gameType])
+}
+
+model ServerSeedRevealHistory {
+  id              String   @id @default(cuid())
+  userId          String?
+  seedPairId      String
+  gameType        GameType
+  serverSeed      String
+  serverSeedHash  String
+  revealedAt      DateTime @default(now())
+  rotatedByUserId String?
+  user            User?    @relation("SeedOwner", fields: [userId], references: [id], onDelete: SetNull)
+  seedPair        UserSeedPair @relation(fields: [seedPairId], references: [id], onDelete: Cascade)
+
+  @@index([seedPairId, revealedAt])
+}
+
+model Wallet {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  availableBalance Decimal  @db.Decimal(18, 2)
+  lockedBalance    Decimal  @db.Decimal(18, 2)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ledgerEntries    BalanceLedger[]
+}
+
+model BalanceLedger {
+  id            String          @id @default(cuid())
+  walletId      String
+  userId        String
+  direction     LedgerDirection
+  amount        Decimal         @db.Decimal(18, 2)
+  balanceBefore Decimal         @db.Decimal(18, 2)
+  balanceAfter  Decimal         @db.Decimal(18, 2)
+  reason        String
+  referenceType String?
+  referenceId   String?
+  metadata      Json?
+  createdAt     DateTime        @default(now())
+  wallet        Wallet           @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model Transaction {
+  id          String            @id @default(cuid())
+  userId      String
+  type        TransactionType
+  status      TransactionStatus @default(PENDING)
+  amount      Decimal           @db.Decimal(18, 2)
+  currency    String            @default("USD")
+  externalRef String?
+  metadata    Json?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type, createdAt])
+}
+
+model ItemDefinition {
+  id             String       @id @default(cuid())
+  itemName       String
+  imageUrl       String
+  rarity         String
+  value          Decimal      @db.Decimal(18, 2)
+  specialFlags   Json?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  caseItems      CaseItem[]
+  inventoryItems InventoryItem[]
+  caseResults    CaseOpenResult[]
+  battleResults  BattleRoundResult[]
+  battleGoldSpinResults BattleGoldSpin[]
+}
+
+model Case {
+  id                 String       @id @default(cuid())
+  name               String
+  slug               String       @unique
+  imageUrl           String
+  description        String?
+  price              Decimal      @db.Decimal(18, 2)
+  active             Boolean      @default(true)
+  goldSpinEnabled    Boolean      @default(true)
+  goldSpinMultiplier Decimal      @db.Decimal(10, 4)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  versions           CaseVersion[]
+  caseOpens          CaseOpen[]
+}
+
+model CaseVersion {
+  id                  String      @id @default(cuid())
+  caseId              String
+  version             Int
+  snapshotHash        String
+  expectedReturn      Decimal?    @db.Decimal(10, 4)
+  createdByUserId     String?
+  createdAt           DateTime    @default(now())
+  case                Case        @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  createdBy           User?       @relation("CaseVersionCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  caseItems           CaseItem[]
+  caseOpens           CaseOpen[]
+  battleRounds        BattleRound[]
+
+  @@unique([caseId, version])
+}
+
+model CaseItem {
+  id               String         @id @default(cuid())
+  caseVersionId    String
+  itemDefinitionId String
+  weight           Int
+  ticketStart      BigInt
+  ticketEnd        BigInt
+  isGoldEligible   Boolean        @default(false)
+  createdAt        DateTime       @default(now())
+  caseVersion      CaseVersion    @relation(fields: [caseVersionId], references: [id], onDelete: Cascade)
+  itemDefinition   ItemDefinition @relation(fields: [itemDefinitionId], references: [id], onDelete: Restrict)
+
+  @@index([caseVersionId, ticketStart, ticketEnd])
+}
+
+model CaseOpen {
+  id             String         @id @default(cuid())
+  userId         String
+  caseId         String
+  caseVersionId  String
+  seedPairId     String
+  serverSeedHash String
+  clientSeed     String
+  nonce          Int
+  status         CaseOpenStatus @default(PENDING)
+  totalSpent     Decimal        @db.Decimal(18, 2)
+  totalWon       Decimal        @db.Decimal(18, 2)
+  createdAt      DateTime       @default(now())
+  resolvedAt     DateTime?
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  case           Case           @relation(fields: [caseId], references: [id], onDelete: Restrict)
+  caseVersion    CaseVersion    @relation(fields: [caseVersionId], references: [id], onDelete: Restrict)
+  results        CaseOpenResult[]
+
+  @@index([userId, createdAt])
+}
+
+model CaseOpenResult {
+  id               String         @id @default(cuid())
+  caseOpenId       String
+  itemDefinitionId String
+  ticket           BigInt
+  itemValue        Decimal        @db.Decimal(18, 2)
+  isGoldSpin       Boolean        @default(false)
+  position         Int            @default(0)
+  metadata         Json?
+  createdAt        DateTime       @default(now())
+  caseOpen         CaseOpen       @relation(fields: [caseOpenId], references: [id], onDelete: Cascade)
+  itemDefinition   ItemDefinition @relation(fields: [itemDefinitionId], references: [id], onDelete: Restrict)
+
+  @@index([caseOpenId, position])
+}
+
+model InventoryItem {
+  id               String              @id @default(cuid())
+  userId           String
+  itemDefinitionId String
+  sourceType       InventorySourceType
+  sourceId         String?
+  value            Decimal             @db.Decimal(18, 2)
+  withdrawable     Boolean             @default(false)
+  status           InventoryItemStatus @default(OWNED)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemDefinition   ItemDefinition      @relation(fields: [itemDefinitionId], references: [id], onDelete: Restrict)
+
+  @@index([userId, status, createdAt])
+}
+
+model Battle {
+  id                   String       @id @default(cuid())
+  mode                 BattleMode
+  format               BattlePlayerFormat
+  privacy              BattlePrivacy @default(PUBLIC)
+  inviteCode           String?      @unique
+  teamSize             Int
+  maxPlayers           Int
+  status               BattleStatus @default(CREATED)
+  createdByUserId      String?
+  caseOrderSnapshot    Json
+  serverSeedEncrypted  String
+  hashedServerSeed     String
+  targetEosBlockNumber Int
+  eosBlockHash         String?
+  lockedAt             DateTime?
+  countdownStartedAt   DateTime?
+  startsAt             DateTime?
+  resolvedAt           DateTime?
+  completedAt          DateTime?
+  winnerParticipantId  String?
+  winnerTeamIndex      Int?
+  totalPoolValue       Decimal?     @db.Decimal(18, 2)
+  spectatorsCount      Int          @default(0)
+  lastSequence         Int          @default(0)
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  createdBy            User?        @relation("BattleCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  participants         BattleParticipant[]
+  rounds               BattleRound[]
+  events               BattleEvent[]
+  goldSpins            BattleGoldSpin[]
+
+  @@index([status, createdAt])
+}
+
+model BattleParticipant {
+  id          String   @id @default(cuid())
+  battleId    String
+  userId      String?
+  seatIndex   Int
+  teamIndex   Int
+  isBot       Boolean  @default(false)
+  totalValue  Decimal  @default(0) @db.Decimal(18, 2)
+  joinedAt    DateTime @default(now())
+  battle      Battle   @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  roundResults BattleRoundResult[]
+  goldSpins   BattleGoldSpin[]
+
+  @@unique([battleId, seatIndex])
+}
+
+model BattleRound {
+  id            String           @id @default(cuid())
+  battleId      String
+  roundNumber   Int
+  caseVersionId String
+  status        BattleRoundStatus @default(PENDING)
+  startsAt      DateTime?
+  animationStartAt DateTime?
+  resolvedAt    DateTime?
+  battle        Battle           @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  caseVersion   CaseVersion      @relation(fields: [caseVersionId], references: [id], onDelete: Restrict)
+  results       BattleRoundResult[]
+  goldSpins     BattleGoldSpin[]
+
+  @@unique([battleId, roundNumber])
+}
+
+model BattleRoundResult {
+  id                   String           @id @default(cuid())
+  battleRoundId        String
+  participantId        String
+  itemDefinitionId     String
+  ticket               BigInt
+  baitIndex            Int?
+  itemValue            Decimal          @db.Decimal(18, 2)
+  isGoldSpin           Boolean          @default(false)
+  createdAt            DateTime         @default(now())
+  battleRound          BattleRound      @relation(fields: [battleRoundId], references: [id], onDelete: Cascade)
+  participant          BattleParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  itemDefinition       ItemDefinition   @relation(fields: [itemDefinitionId], references: [id], onDelete: Restrict)
+
+  @@index([battleRoundId, participantId])
+}
+
+model BattleGoldSpin {
+  id                     String           @id @default(cuid())
+  battleId               String
+  battleRoundId          String
+  participantId          String
+  triggerItemValue       Decimal          @db.Decimal(18, 2)
+  resultItemDefinitionId String
+  resultItemValue        Decimal          @db.Decimal(18, 2)
+  createdAt              DateTime         @default(now())
+  battle                 Battle           @relation(fields: [battleId], references: [id], onDelete: Cascade)
+  battleRound            BattleRound      @relation(fields: [battleRoundId], references: [id], onDelete: Cascade)
+  participant            BattleParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  resultItemDefinition   ItemDefinition   @relation(fields: [resultItemDefinitionId], references: [id], onDelete: Restrict)
+
+  @@index([battleId, battleRoundId])
+}
+
+model BattleEvent {
+  id              String   @id @default(cuid())
+  battleId         String
+  sequence         Int
+  eventType        String
+  serverTimestampMs BigInt
+  payload          Json
+  createdAt        DateTime @default(now())
+  battle           Battle    @relation(fields: [battleId], references: [id], onDelete: Cascade)
+
+  @@unique([battleId, sequence])
+  @@index([battleId, createdAt])
+}
+
+model RouletteRound {
+  id                 String              @id @default(cuid())
+  roundNumber        Int                 @unique
+  status             RouletteRoundStatus @default(OPEN)
+  opensAt            DateTime
+  closesAt           DateTime
+  resolvedAt         DateTime?
+  serverSeedEncrypted String
+  serverSeedHash     String
+  serverSeedRevealed String?
+  clientSeed         String
+  nonce              Int
+  winningSegment     Int?
+  winningColor       RouletteColor?
+  outcomeValue       Decimal?            @db.Decimal(18, 2)
+  fairnessEvidence   Json?
+  createdAt          DateTime            @default(now())
+  bets               RouletteBet[]
+
+  @@index([status, opensAt])
+}
+
+model RouletteBet {
+  id               String            @id @default(cuid())
+  rouletteRoundId  String
+  userId           String
+  betType          RouletteBetType
+  color            RouletteColor?
+  segment          Int?
+  amount           Decimal           @db.Decimal(18, 2)
+  payoutMultiplier Decimal           @db.Decimal(10, 4)
+  status           RouletteBetStatus @default(PLACED)
+  payoutAmount     Decimal?          @db.Decimal(18, 2)
+  createdAt        DateTime          @default(now())
+  rouletteRound    RouletteRound     @relation(fields: [rouletteRoundId], references: [id], onDelete: Cascade)
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([rouletteRoundId, userId])
+}
+
+model FairnessRecord {
+  id              String   @id @default(cuid())
+  gameType        GameType
+  referenceId     String
+  serverSeedHash  String
+  serverSeed      String?
+  clientSeed      String?
+  nonce           Int?
+  eosBlockNumber  Int?
+  eosBlockHash    String?
+  derivationInput Json
+  resultHash      String
+  resultTicket    BigInt?
+  immutableHash   String
+  createdAt       DateTime @default(now())
+
+  @@index([gameType, referenceId])
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  actorUserId  String?
+  targetUserId String?
+  action       String
+  entityType   String
+  entityId     String?
+  reason       String?
+  ipAddress    String?
+  userAgent    String?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+  actor        User?    @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  target       User?    @relation("AuditTarget", fields: [targetUserId], references: [id], onDelete: SetNull)
+
+  @@index([action, createdAt])
+}
+
+model Restriction {
+  id            String          @id @default(cuid())
+  userId        String
+  type          RestrictionType
+  reason        String
+  active        Boolean         @default(true)
+  startsAt      DateTime        @default(now())
+  endsAt        DateTime?
+  createdById   String?
+  createdAt     DateTime        @default(now())
+  user          User            @relation("RestrictedUser", fields: [userId], references: [id], onDelete: Cascade)
+  createdBy     User?           @relation("RestrictionCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([userId, type, active])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  body      String
+  type      String
+  isRead    Boolean  @default(false)
+  metadata  Json?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead, createdAt])
+}
