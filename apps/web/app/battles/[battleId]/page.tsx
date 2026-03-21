@@ -1,6 +1,7 @@
 import { PageShell } from "../../../components/layout/page-shell";
 import { BattleArenaStage } from "../../../components/animations/battle-arena-stage";
 import { SectionHeader } from "../../../components/ui/section-header";
+import { DataRow, Surface } from "../../../components/ui/design-system";
 
 export default async function BattleRoomPage({
   params,
@@ -18,37 +19,37 @@ export default async function BattleRoomPage({
         action={<button className="btn-secondary">Join as Spectator</button>}
       />
 
-      <div className="grid gap-5 xl:grid-cols-[1.45fr_1fr]">
-        <section className="panel-elevated p-5">
+      <div className="grid gap-3 xl:grid-cols-[1.55fr_0.95fr]">
+        <section className="panel-elevated p-4">
           <BattleArenaStage />
         </section>
 
-        <aside className="space-y-4">
-          <div className="panel p-5">
-            <h2 className="text-lg font-semibold text-white">Battle Stats</h2>
-            <ul className="mt-3 space-y-2 text-sm text-silver">
-              <li>Spectators: 128</li>
-              <li>Mode: Crazy Jackpot</li>
-              <li>Event version: 1</li>
-              <li>Sequence: 52</li>
-            </ul>
-          </div>
+        <aside className="space-y-3">
+          <Surface className="p-4">
+            <h2 className="text-base font-semibold text-white">Battle Stats</h2>
+            <div className="mt-2 space-y-2">
+              <DataRow left="Spectators" right="128" />
+              <DataRow left="Mode" right="Crazy Jackpot" />
+              <DataRow left="Event version" right="v1" />
+              <DataRow left="Sequence" right="52" />
+            </div>
+          </Surface>
 
-          <div className="panel p-5">
-            <h3 className="text-base font-semibold text-white">Live Events</h3>
-            <ul className="mt-3 space-y-2 text-sm text-silver">
-              <li>• Team A opened AK-47 | Asiimov</li>
-              <li>• Gold Spin triggered in Round 2</li>
-              <li>• Team B gained +$349.20 lead</li>
+          <Surface className="p-4">
+            <h3 className="text-sm font-semibold text-white">Live Events</h3>
+            <ul className="mt-2 space-y-2 text-sm text-silver">
+              <li className="rounded-[9px] border border-graphite/70 bg-panel2/75 px-3 py-2">Team A opened AK-47 | Asiimov</li>
+              <li className="rounded-[9px] border border-graphite/70 bg-panel2/75 px-3 py-2">Gold Spin triggered in Round 2</li>
+              <li className="rounded-[9px] border border-graphite/70 bg-panel2/75 px-3 py-2">Team B gained +$349.20 lead</li>
             </ul>
-          </div>
+          </Surface>
 
-          <div className="panel p-5">
-            <h3 className="text-base font-semibold text-white">Spectator Chat</h3>
-            <div className="mt-3 rounded-xl border border-graphite/70 bg-panel2/75 p-3 text-sm text-silver">
+          <Surface className="p-4">
+            <h3 className="text-sm font-semibold text-white">Spectator Chat</h3>
+            <div className="mt-2 rounded-[10px] border border-graphite/70 bg-panel2/75 p-3 text-sm text-silver">
               Chat stream placeholder for moderated battle room chat.
             </div>
-          </div>
+          </Surface>
         </aside>
       </div>
     </PageShell>

@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { PageShell } from "../components/layout/page-shell";
+import { ClickCard, MetricTile, SkeletonBlock, Surface } from "../components/ui/design-system";
 
 const highlights = [
-  { title: "Case Opening", href: "/cases", desc: "Studio-grade reel animations mapped to backend results only." },
-  { title: "Case Battles", href: "/battles", desc: "Fully synchronized rooms with shared timeline and EOS-backed fairness." },
-  { title: "Roulette", href: "/roulette", desc: "Server-timed spin lock, round history, and deterministic segment outcomes." },
+  { title: "Case Opening", href: "/cases", desc: "Deterministic reel outcome with precise stop physics." },
+  { title: "Case Battles", href: "/battles", desc: "Synchronized rooms with immutable event sequencing." },
+  { title: "Roulette", href: "/roulette", desc: "Timed lock state and backend-authoritative landing." },
 ];
 
 const quickStats = [
@@ -17,22 +18,19 @@ const quickStats = [
 export default function HomePage() {
   return (
     <PageShell>
-      <section className="panel-elevated hero-glow overflow-hidden p-8 md:p-12">
-        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-accent/35 bg-accent/10 px-4 py-1 text-xs uppercase tracking-[0.2em] text-accent">
+      <section className="panel-elevated hero-glow overflow-hidden p-6 md:p-8">
+        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-accent/35 bg-accent/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-accent">
           <span className="status-dot bg-success" /> Provably fair and authoritative
         </div>
-        <h1 className="max-w-4xl text-4xl font-black leading-tight text-white md:text-6xl [font-family:var(--font-orbitron)]">
-          Premium <span className="text-gradient">CS2 case opening</span> with real-time multiplayer battles
+        <h1 className="max-w-4xl text-4xl font-black leading-tight text-white md:text-5xl [font-family:var(--font-orbitron)]">
+          High-stakes <span className="text-gradient">CS2 game arena</span> built for trust, speed, and live tension
         </h1>
-        <p className="mt-5 max-w-2xl text-base text-silver">
-          Crafted with production-grade architecture: deterministic fairness, immutable game records, synchronized websocket
-          events, and an elevated visual language inspired by top-tier CS2 gaming platforms.
+        <p className="mt-4 max-w-2xl text-sm text-silver md:text-[15px]">
+          Every open, battle round, and roulette stop comes from backend truth with immutable fairness evidence and synchronized
+          event playback.
         </p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Link
-            href="/cases"
-            className="btn-primary"
-          >
+        <div className="mt-6 flex flex-wrap gap-2.5">
+          <Link href="/cases" className="btn-primary">
             Open Cases
           </Link>
           <Link href="/battles" className="btn-secondary">
@@ -43,59 +41,59 @@ export default function HomePage() {
           </Link>
         </div>
 
-        <div className="mt-10 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-6 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
           {quickStats.map((stat) => (
-            <article key={stat.label} className="rounded-2xl border border-graphite/80 bg-panel2/80 p-4">
-              <p className="text-xs uppercase tracking-[0.16em] text-silver/80">{stat.label}</p>
-              <p className="mt-2 text-2xl font-semibold text-white">{stat.value}</p>
-            </article>
+            <MetricTile key={stat.label} label={stat.label} value={stat.value} />
           ))}
         </div>
       </section>
 
-      <section className="mt-8 grid gap-4 lg:grid-cols-3">
+      <section className="mt-5 grid gap-3 lg:grid-cols-3">
         {highlights.map((item) => (
-          <Link
-            key={item.title}
-            href={item.href}
-            className="panel-elevated block p-6 transition duration-300 hover:-translate-y-0.5 hover:border-accent/50"
-          >
-            <div className="mb-4 h-1 w-14 rounded-full bg-gradient-to-r from-accent to-accentSoft" />
-            <h2 className="text-xl font-semibold text-white">{item.title}</h2>
-            <p className="mt-3 text-sm text-silver">{item.desc}</p>
-            <p className="mt-6 text-xs uppercase tracking-[0.16em] text-accent">Explore mode</p>
-          </Link>
+          <ClickCard key={item.title}>
+            <Link href={item.href} className="panel-elevated block p-4 transition hover:border-accent/45">
+              <div className="mb-3 h-1 w-12 rounded-full bg-gradient-to-r from-accent to-accentSoft" />
+              <h2 className="text-lg font-semibold text-white">{item.title}</h2>
+              <p className="mt-2 text-sm text-silver">{item.desc}</p>
+              <p className="mt-4 text-[11px] uppercase tracking-[0.16em] text-accent">Enter module</p>
+            </Link>
+          </ClickCard>
         ))}
       </section>
 
-      <section className="mt-8 grid gap-4 lg:grid-cols-[1.5fr_1fr]">
-        <div className="panel p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">Live Activity</h3>
+      <section className="mt-5 grid gap-3 lg:grid-cols-[1.45fr_1fr]">
+        <Surface className="p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-base font-semibold text-white">Live Activity</h3>
             <span className="chip">real-time feed</span>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {[
               "Aiden opened Desert Eagle | Blaze ($429.50)",
               "Team Echo won a 3v3 terminal battle ($1,248.70)",
               "Roulette Round #2814 landed on GOLD",
               "Nova hit a Gold Spin on Crimson Protocol Case",
             ].map((event) => (
-              <div key={event} className="rounded-xl border border-graphite/80 bg-panel2/80 px-4 py-3 text-sm text-silver">
+              <div key={event} className="rounded-[10px] border border-graphite/80 bg-panel2/80 px-3 py-2 text-sm text-silver">
                 {event}
               </div>
             ))}
           </div>
-        </div>
-        <div className="panel p-6">
-          <h3 className="text-lg font-semibold text-white">Security & Fairness</h3>
-          <ul className="mt-4 space-y-3 text-sm text-silver">
+        </Surface>
+        <Surface className="p-4">
+          <h3 className="text-base font-semibold text-white">Security & Fairness</h3>
+          <ul className="mt-3 space-y-2 text-sm text-silver">
             <li>• HMAC SHA-256 deterministic ticket derivation</li>
             <li>• Seed rotation + reveal history</li>
             <li>• EOS block hash integration for battles</li>
             <li>• Immutable fairness records and verifier tools</li>
           </ul>
-        </div>
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <SkeletonBlock className="h-10" />
+            <SkeletonBlock className="h-10" />
+            <SkeletonBlock className="h-10" />
+          </div>
+        </Surface>
       </section>
     </PageShell>
   );

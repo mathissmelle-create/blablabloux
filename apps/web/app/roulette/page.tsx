@@ -1,6 +1,7 @@
 import { PageShell } from "../../components/layout/page-shell";
 import { Roulette3DStage } from "../../components/animations/roulette-3d-stage";
 import { SectionHeader } from "../../components/ui/section-header";
+import { DataRow, MetricTile, Surface } from "../../components/ui/design-system";
 
 export default function RoulettePage() {
   return (
@@ -11,43 +12,39 @@ export default function RoulettePage() {
         subtitle="Backend-authoritative countdown, bet lock timing, and deterministic segment resolution."
         action={<button className="btn-primary">Place Bet</button>}
       />
-      <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
-        <section className="panel-elevated p-5">
+      <div className="mb-3 grid gap-2 md:grid-cols-3">
+        <MetricTile label="Round #" value="2814" />
+        <MetricTile label="Bets this round" value="183" />
+        <MetricTile label="Lock-in closes" value="2.3s" tone="accent" />
+      </div>
+      <div className="grid gap-3 lg:grid-cols-[1.4fr_1fr]">
+        <section className="panel-elevated p-4">
           <Roulette3DStage />
         </section>
 
-        <aside className="space-y-4">
-          <div className="panel p-5">
-            <h3 className="text-base font-semibold text-white">Round History</h3>
-            <div className="mt-3 flex flex-wrap gap-2">
+        <aside className="space-y-3">
+          <Surface className="p-4">
+            <h3 className="text-sm font-semibold text-white">Round History</h3>
+            <div className="mt-2 flex flex-wrap gap-1.5">
               {["R", "B", "R", "R", "G", "B", "Gold", "R"].map((entry, idx) => (
                 <span
                   key={`${entry}-${idx}`}
-                  className="rounded-lg border border-graphite/80 bg-panel2/70 px-2 py-1 text-xs text-silver"
+                  className="rounded-[7px] border border-graphite/80 bg-panel2/70 px-2 py-1 text-xs text-silver"
                 >
                   {entry}
                 </span>
               ))}
             </div>
-          </div>
+          </Surface>
 
-          <div className="panel p-5">
-            <h3 className="text-base font-semibold text-white">Top Bets</h3>
-            <div className="mt-3 space-y-2 text-sm text-silver">
-              <div className="flex justify-between rounded-lg border border-graphite/80 bg-panel2/70 px-3 py-2">
-                <span>Red</span>
-                <span>$1,249</span>
-              </div>
-              <div className="flex justify-between rounded-lg border border-graphite/80 bg-panel2/70 px-3 py-2">
-                <span>Black</span>
-                <span>$988</span>
-              </div>
-              <div className="flex justify-between rounded-lg border border-graphite/80 bg-panel2/70 px-3 py-2">
-                <span>Gold</span>
-                <span>$412</span>
-              </div>
+          <Surface className="p-4">
+            <h3 className="text-sm font-semibold text-white">Top Bets</h3>
+            <div className="mt-2 space-y-2">
+              <DataRow left="Red" right="$1,249" />
+              <DataRow left="Black" right="$988" />
+              <DataRow left="Gold" right="$412" />
             </div>
-          </div>
+          </Surface>
         </aside>
       </div>
     </PageShell>

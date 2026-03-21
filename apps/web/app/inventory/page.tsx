@@ -1,5 +1,6 @@
 import { PageShell } from "../../components/layout/page-shell";
 import { SectionHeader } from "../../components/ui/section-header";
+import { ClickCard } from "../../components/ui/design-system";
 
 export default function InventoryPage() {
   return (
@@ -17,17 +18,19 @@ export default function InventoryPage() {
           </button>
         ))}
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 8 }).map((_, idx) => (
-          <article key={idx} className="panel-elevated p-4">
-            <div className="h-32 rounded-xl border border-graphite/70 bg-black/25" />
-            <h3 className="mt-3 text-sm font-semibold text-white">Skin Item #{idx + 1}</h3>
-            <p className="text-xs text-silver">Classified • Factory New</p>
-            <div className="mt-3 flex items-center justify-between">
-              <span className="text-sm text-accent">${(29 + idx * 7).toFixed(2)}</span>
-              <span className="chip">{idx % 3 === 0 ? "Withdrawable" : "Locked"}</span>
-            </div>
-          </article>
+          <ClickCard key={idx}>
+            <article className="panel-elevated p-3">
+              <div className="h-28 rounded-[10px] border border-graphite/70 bg-black/25" />
+              <h3 className="mt-2 text-sm font-semibold text-white">Skin Item #{idx + 1}</h3>
+              <p className="text-[11px] text-silver">Classified • Factory New</p>
+              <div className="mt-2 flex items-center justify-between">
+                <span className="text-sm text-accent">${(29 + idx * 7).toFixed(2)}</span>
+                <span className="chip">{idx % 3 === 0 ? "Withdrawable" : "Locked"}</span>
+              </div>
+            </article>
+          </ClickCard>
         ))}
       </div>
     </PageShell>

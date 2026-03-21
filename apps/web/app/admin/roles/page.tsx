@@ -1,4 +1,5 @@
 import { AdminPageShell } from "../../../components/admin/admin-page-shell";
+import { ClickCard } from "../../../components/ui/design-system";
 
 export default function AdminRolesPage() {
   return (
@@ -7,12 +8,14 @@ export default function AdminRolesPage() {
       description="Manage role-permission mappings and access boundaries."
       action={<button className="btn-primary">Create Role</button>}
     >
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-2 lg:grid-cols-2">
         {["super_admin", "admin", "moderator", "support", "user"].map((role) => (
-          <article key={role} className="panel p-4">
-            <h3 className="text-base font-semibold text-white">{role}</h3>
-            <p className="mt-2 text-sm text-silver">Assigned permissions: 12</p>
-          </article>
+          <ClickCard key={role}>
+            <article className="panel p-3">
+              <h3 className="text-base font-semibold text-white">{role}</h3>
+              <p className="mt-1 text-sm text-silver">Assigned permissions: 12</p>
+            </article>
+          </ClickCard>
         ))}
       </div>
     </AdminPageShell>

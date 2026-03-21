@@ -62,19 +62,19 @@ export function Roulette3DStage() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.16em] text-silver">authoritative roulette packet</p>
-          <h3 className="text-lg font-semibold text-white">3D Wheel Stage</h3>
+          <p className="text-[11px] uppercase tracking-[0.16em] text-silver">authoritative roulette packet</p>
+          <h3 className="text-base font-semibold text-white">3D Wheel Stage</h3>
         </div>
         <button className="btn-primary disabled:opacity-60" disabled={spinning} onClick={resolveRound}>
           {spinning ? "Resolving..." : "Resolve Round"}
         </button>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_240px]">
-        <div className="rounded-2xl border border-graphite/70 bg-panel2/75 p-6">
+      <div className="grid gap-3 lg:grid-cols-[1fr_240px]">
+        <div className="rounded-[12px] border border-graphite/70 bg-panel2/75 p-4">
           <div className="relative mx-auto h-[320px] w-[320px] [perspective:1000px]">
             <div className="absolute left-1/2 top-0 z-20 -translate-x-1/2 rounded-b-lg border border-accent/40 bg-accent/15 px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-accent">
               pointer
@@ -87,23 +87,23 @@ export function Roulette3DStage() {
                 transformStyle: "preserve-3d",
               }}
             />
-            <div className="absolute left-1/2 top-1/2 z-10 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent/40 bg-black/40" />
+            <div className="absolute left-1/2 top-1/2 z-10 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent/35 bg-black/45" />
           </div>
         </div>
 
-        <div className="space-y-3 rounded-2xl border border-graphite/70 bg-panel2/75 p-4">
-          <p className="text-xs uppercase tracking-[0.14em] text-silver">recent authoritative outcomes</p>
+        <div className="space-y-2 rounded-[12px] border border-graphite/70 bg-panel2/75 p-3">
+          <p className="text-[11px] uppercase tracking-[0.14em] text-silver">recent authoritative outcomes</p>
           {Array.from({ length: Math.min(cursor, 5) }).map((_, idx) => {
             const entry = AUTHORITATIVE_SEGMENT_SCRIPT[Math.max(0, cursor - idx - 1)] ?? 0;
             const segment = SEGMENTS[entry];
             return (
-              <div key={`${entry}-${idx}`} className="rounded-lg border border-graphite/70 bg-black/20 px-3 py-2 text-sm text-silver">
+              <div key={`${entry}-${idx}`} className="rounded-[9px] border border-graphite/70 bg-black/20 px-3 py-2 text-sm text-silver">
                 Round #{cursor - idx}: {segment?.label}
               </div>
             );
           })}
           {resultIndex !== null ? (
-            <div className="rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-sm text-accent">
+            <div className="rounded-[9px] border border-accent/40 bg-accent/10 px-3 py-2 text-sm text-accent">
               Landed: {SEGMENTS[resultIndex]?.label}
             </div>
           ) : null}

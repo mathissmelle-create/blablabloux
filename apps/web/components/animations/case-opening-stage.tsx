@@ -37,10 +37,10 @@ const BASE_ITEMS: ReelItem[] = [
 const GOLD_POOL: ReelItem[] = BASE_ITEMS.filter((item) => item.goldEligible);
 
 function rarityClass(rarity: ReelItem["rarity"]) {
-  if (rarity === "covert") return "border-red-400/70";
-  if (rarity === "classified") return "border-pink-400/70";
-  if (rarity === "restricted") return "border-purple-400/70";
-  if (rarity === "milspec") return "border-blue-400/70";
+  if (rarity === "covert") return "border-rarityRed/70";
+  if (rarity === "classified") return "border-rarityPink/70";
+  if (rarity === "restricted") return "border-rarityPurple/70";
+  if (rarity === "milspec") return "border-rarityBlue/70";
   return "border-graphite/70";
 }
 
@@ -127,24 +127,24 @@ export function CaseOpeningStage({ title, casePrice }: CaseOpeningStageProps) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.16em] text-silver">authoritative animation stage</p>
-          <h3 className="text-lg font-semibold text-white">{title}</h3>
+          <p className="text-[11px] uppercase tracking-[0.16em] text-silver">authoritative animation stage</p>
+          <h3 className="text-base font-semibold text-white">{title}</h3>
         </div>
         <button disabled={isSpinning} className="btn-primary disabled:opacity-60" onClick={playAuthoritativeSpin}>
           {isSpinning ? "Spinning..." : "Open (Server Event)"}
         </button>
       </div>
 
-      <div className="relative overflow-hidden rounded-2xl border border-graphite/70 bg-panel2/75 p-4">
+      <div className="relative overflow-hidden rounded-[12px] border border-graphite/70 bg-panel2/75 p-3">
         <div className="pointer-events-none absolute inset-y-0 left-1/2 z-20 w-[180px] -translate-x-1/2 border-x border-accent/40 bg-accent/5" />
         <motion.div ref={trackRef} className="flex gap-3 will-change-transform" initial={false}>
           {reelItems.map((item, idx) => (
             <div
               key={`${item.name}-${idx}`}
-              className={`h-24 w-[170px] shrink-0 rounded-xl border ${rarityClass(item.rarity)} bg-black/30 p-3`}
+              className={`h-24 w-[170px] shrink-0 rounded-[9px] border ${rarityClass(item.rarity)} bg-black/30 p-3`}
             >
               <p className="truncate text-xs text-silver">{item.name}</p>
               <p className="mt-2 text-sm font-semibold text-white">${item.value.toFixed(2)}</p>
@@ -158,7 +158,7 @@ export function CaseOpeningStage({ title, casePrice }: CaseOpeningStageProps) {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-xl border border-accent/40 bg-accent/10 p-4"
+          className="rounded-[10px] border border-accent/40 bg-accent/10 p-3"
         >
           <p className="text-xs uppercase tracking-[0.16em] text-accent">landed item</p>
           <p className="mt-1 text-sm text-white">
@@ -168,13 +168,13 @@ export function CaseOpeningStage({ title, casePrice }: CaseOpeningStageProps) {
       ) : null}
 
       {isGoldSpinning || goldResult ? (
-        <div className="rounded-2xl border border-amber-300/40 bg-amber-200/10 p-4">
-          <p className="mb-2 text-xs uppercase tracking-[0.16em] text-amber-300">gold spin lane</p>
-          <div className="relative overflow-hidden rounded-xl border border-amber-300/30 bg-black/20 p-3">
+        <div className="rounded-[12px] border border-amber-300/40 bg-amber-200/10 p-3">
+          <p className="mb-2 text-[11px] uppercase tracking-[0.16em] text-amber-300">gold spin lane</p>
+          <div className="relative overflow-hidden rounded-[10px] border border-amber-300/30 bg-black/20 p-3">
             <div className="pointer-events-none absolute inset-y-0 left-1/2 z-20 w-[180px] -translate-x-1/2 border-x border-amber-300/50 bg-amber-400/10" />
             <motion.div ref={goldTrackRef} className="flex gap-3 will-change-transform" initial={false}>
               {goldReelItems.map((item, idx) => (
-                <div key={`${item.name}-${idx}`} className="h-20 w-[170px] shrink-0 rounded-lg border border-amber-300/40 bg-black/30 p-3">
+                <div key={`${item.name}-${idx}`} className="h-20 w-[170px] shrink-0 rounded-[8px] border border-amber-300/40 bg-black/30 p-3">
                   <p className="truncate text-xs text-amber-100">{item.name}</p>
                   <p className="mt-2 text-sm font-semibold text-white">${item.value.toFixed(2)}</p>
                 </div>

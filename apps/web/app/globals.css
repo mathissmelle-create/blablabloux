@@ -4,6 +4,14 @@
 
 :root {
   color-scheme: dark;
+  --bg-0: #07090d;
+  --bg-1: #0b1018;
+  --surface-0: #101723;
+  --surface-1: #0d141d;
+  --stroke-soft: rgba(146, 166, 196, 0.2);
+  --stroke-strong: rgba(146, 166, 196, 0.34);
+  --accent: #ffad33;
+  --accent-soft: #ffd27e;
 }
 
 html,
@@ -14,16 +22,32 @@ body {
 body {
   min-height: 100vh;
   background:
-    radial-gradient(circle at 10% -5%, rgba(245, 158, 11, 0.2), transparent 38%),
-    radial-gradient(circle at 95% -15%, rgba(147, 197, 253, 0.14), transparent 42%),
-    radial-gradient(circle at 70% 130%, rgba(245, 158, 11, 0.08), transparent 35%),
-    linear-gradient(180deg, #06080f 0%, #060913 50%, #070a14 100%);
+    radial-gradient(circle at 15% -5%, rgba(255, 173, 51, 0.15), transparent 33%),
+    radial-gradient(circle at 94% -18%, rgba(126, 154, 207, 0.1), transparent 35%),
+    linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 52%, #090d15 100%);
   background-attachment: fixed;
+  letter-spacing: 0.01em;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+}
+
+*::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
 }
 
 .panel {
-  @apply rounded-2xl border border-graphite bg-panel shadow-panel backdrop-blur;
-  background-color: rgba(16, 21, 33, 0.86);
+  @apply relative rounded-[14px] border bg-panel shadow-panel backdrop-blur;
+  border-color: var(--stroke-soft);
+  background: linear-gradient(180deg, rgba(17, 24, 35, 0.92) 0%, rgba(13, 20, 31, 0.9) 100%);
 }
 
 .panel-elevated {
@@ -34,40 +58,87 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  border-radius: 1rem;
-  background: linear-gradient(140deg, rgba(245, 158, 11, 0.08), transparent 35%, rgba(148, 163, 184, 0.08));
+  border-radius: 14px;
+  background: linear-gradient(130deg, rgba(255, 173, 51, 0.08), transparent 42%, rgba(139, 157, 190, 0.08));
   pointer-events: none;
 }
 
 .chip {
-  @apply inline-flex items-center rounded-full border border-graphite bg-panel2 px-3 py-1 text-xs font-medium text-silver;
+  @apply inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium;
+  border-color: var(--stroke-soft);
+  background-color: rgba(15, 21, 31, 0.9);
+  color: #a6b4ca;
+}
+
+.chip-accent {
+  border-color: rgba(255, 173, 51, 0.35);
+  background-color: rgba(255, 173, 51, 0.12);
+  color: var(--accent-soft);
 }
 
 .glass-input {
-  @apply w-full rounded-xl border border-graphite bg-black px-4 py-2.5 text-sm text-white placeholder:text-silver outline-none transition focus:border-accent focus:ring-2 focus:ring-accent;
+  @apply w-full rounded-[10px] border px-3 py-2 text-sm text-white outline-none transition;
+  border-color: var(--stroke-soft);
+  background: linear-gradient(180deg, rgba(9, 13, 20, 0.85), rgba(10, 14, 21, 0.95));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.glass-input::placeholder {
+  color: #72829b;
+}
+
+.glass-input:focus {
+  border-color: rgba(255, 173, 51, 0.55);
+  box-shadow: 0 0 0 3px rgba(255, 173, 51, 0.14);
 }
 
 .btn-primary {
-  @apply inline-flex items-center justify-center rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-black shadow-glow transition hover:brightness-110;
+  @apply inline-flex items-center justify-center rounded-[10px] px-4 py-2 text-sm font-semibold transition;
+  color: #1a1202;
+  background: linear-gradient(180deg, #ffbe57 0%, #ffad33 100%);
+  border: 1px solid rgba(255, 173, 51, 0.7);
+  box-shadow: 0 8px 20px rgba(255, 173, 51, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.btn-primary:hover {
+  filter: brightness(1.05);
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
 }
 
 .btn-secondary {
-  @apply inline-flex items-center justify-center rounded-xl border border-accent bg-accent px-4 py-2.5 text-sm font-semibold text-black transition hover:brightness-110;
-  background-color: rgba(245, 158, 11, 0.22);
-  color: #fbbf24;
+  @apply inline-flex items-center justify-center rounded-[10px] px-4 py-2 text-sm font-semibold transition;
+  color: #ffd27e;
+  border: 1px solid rgba(255, 173, 51, 0.45);
+  background: linear-gradient(180deg, rgba(255, 173, 51, 0.22), rgba(255, 173, 51, 0.12));
+}
+
+.btn-secondary:hover {
+  border-color: rgba(255, 173, 51, 0.62);
+  background: linear-gradient(180deg, rgba(255, 173, 51, 0.28), rgba(255, 173, 51, 0.16));
 }
 
 .btn-ghost {
-  @apply inline-flex items-center justify-center rounded-xl border border-graphite bg-panel2 px-4 py-2.5 text-sm font-medium text-silver transition hover:border-silver hover:text-white;
-  background-color: rgba(16, 21, 33, 0.8);
+  @apply inline-flex items-center justify-center rounded-[10px] px-4 py-2 text-sm font-medium transition;
+  color: #a4b1c7;
+  border: 1px solid var(--stroke-soft);
+  background: linear-gradient(180deg, rgba(16, 23, 33, 0.75), rgba(13, 20, 29, 0.86));
+}
+
+.btn-ghost:hover {
+  border-color: var(--stroke-strong);
+  color: #e2e8f0;
 }
 
 .table-header {
-  @apply text-xs uppercase tracking-[0.18em] text-silver;
+  @apply text-[11px] uppercase tracking-[0.14em];
+  color: #8ea0bd;
 }
 
 .text-gradient {
-  background: linear-gradient(95deg, #fbbf24 0%, #f59e0b 35%, #d1d5db 100%);
+  background: linear-gradient(95deg, #ffd27e 0%, #ffad33 40%, #cad5e7 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -82,10 +153,38 @@ body {
 
 .hero-glow {
   background:
-    radial-gradient(circle at 10% 20%, rgba(245, 158, 11, 0.2), transparent 40%),
-    radial-gradient(circle at 80% 0%, rgba(129, 140, 248, 0.16), transparent 35%);
+    radial-gradient(circle at 12% 16%, rgba(255, 173, 51, 0.22), transparent 42%),
+    radial-gradient(circle at 82% 2%, rgba(128, 143, 177, 0.2), transparent 34%);
 }
 
 .status-dot {
   @apply h-2.5 w-2.5 rounded-full;
+}
+
+.surface-grid {
+  background-image:
+    linear-gradient(rgba(137, 157, 190, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(137, 157, 190, 0.06) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(58, 72, 96, 0.3), rgba(46, 58, 79, 0.28));
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
 }

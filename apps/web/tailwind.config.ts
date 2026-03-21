@@ -8,33 +8,45 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#06080f",
-        panel: "#101521",
-        panel2: "#0d131d",
-        graphite: "#263248",
-        accent: "#f59e0b",
-        accentSoft: "#fbbf24",
-        silver: "#95a2b8",
+        background: "#07090d",
+        panel: "#121721",
+        panel2: "#0e141d",
+        graphite: "#242f40",
+        accent: "#ffad33",
+        accentSoft: "#ffd27e",
+        silver: "#8f9db3",
         success: "#22c55e",
         danger: "#ef4444",
+        warning: "#f59e0b",
+        rarityBlue: "#4d86ff",
+        rarityPurple: "#9c5dff",
+        rarityPink: "#e35db9",
+        rarityRed: "#ef6256",
+        rarityGold: "#eeb347",
       },
       boxShadow: {
-        glow: "0 0 26px rgba(245, 158, 11, 0.32)",
-        panel: "0 20px 50px rgba(1, 6, 20, 0.45)",
-        inset: "inset 0 1px 0 rgba(255,255,255,0.08)",
+        glow: "0 0 26px rgba(255, 173, 51, 0.22)",
+        panel: "0 22px 44px rgba(2, 8, 24, 0.46)",
+        inset: "inset 0 1px 0 rgba(255,255,255,0.06)",
+        line: "0 0 0 1px rgba(255,255,255,0.04)",
       },
       backgroundImage: {
         "hero-gradient":
-          "radial-gradient(circle at 20% 20%, rgba(245, 158, 11, 0.25), transparent 45%), radial-gradient(circle at 80% 0%, rgba(111, 125, 159, 0.2), transparent 30%)",
+          "radial-gradient(circle at 24% 14%, rgba(255, 173, 51, 0.22), transparent 45%), radial-gradient(circle at 80% 8%, rgba(130, 148, 183, 0.22), transparent 34%)",
       },
       keyframes: {
         pulseGlow: {
-          "0%, 100%": { boxShadow: "0 0 0 rgba(245, 158, 11, 0)" },
-          "50%": { boxShadow: "0 0 26px rgba(245, 158, 11, 0.35)" },
+          "0%, 100%": { boxShadow: "0 0 0 rgba(255, 173, 51, 0)" },
+          "50%": { boxShadow: "0 0 22px rgba(255, 173, 51, 0.26)" },
+        },
+        tickerUp: {
+          "0%": { transform: "translateY(4px)", opacity: "0.45" },
+          "100%": { transform: "translateY(0px)", opacity: "1" },
         },
       },
       animation: {
         "pulse-glow": "pulseGlow 2.4s ease-in-out infinite",
+        "ticker-up": "tickerUp 260ms ease-out",
       },
     },
   },
